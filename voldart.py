@@ -7,7 +7,6 @@ headers = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3"
 } 
 
-
 class VolDeArt:
     def __init__(self, url, max_pages=100, override_results=True) -> None:
         self.url = url 
@@ -46,15 +45,32 @@ class VolDeArt:
     
     def _save_links(self, lien_images):
         with open(self.filename, "a") as file_writer:
-            for lien in lien_images:
-                file_writer.write(str(lien) + "\n")
+            for description, lien in lien_images.items():
+                file_writer.write(f"{description},{lien}\n")
         
-    def get_images_links(self):
+    def get_profile_images(self):
         liens = self.soup.find_all('a')
         liens_images = set()
         for lien in liens:
             if lien.get('data-icon'):
                 liens_images.add(lien['data-icon'].strip().split("?")[0])
+        print(f"[+] {len(liens_images)} images trouvées.")
+        # self._save_links(liens_images)
+    
+    def get_images_links(self):
+        liens_images = dict()
+        images = self.soup.find_all('img')
+        for image in images:
+            lien = image.get("src")
+            if 'images-wixmp' in lien:
+                i = 0
+                while image.name != 'a' and i <= 2:  # Remonte recursivement l'arbre HTML pour trouver le label de l'image 
+                    image = image.parent
+                    i += 1
+
+                description = image.get('aria-label')
+                if description: description = description.replace(', visual art', '')  # Enlève visual art, et condition pour éviter le None
+                liens_images[description] = lien
         print(f"[+] {len(liens_images)} images trouvées.")
         self._save_links(liens_images)
     
@@ -77,5 +93,5 @@ class VolDeArt:
 
 if __name__ == "__main__":
     site_url = "https://www.deviantart.com/topic/digital-art"
-    scraper = VolDeArt(site_url, max_pages=3)
+    scraper = VolDeArt(site_url, max_pages=1)
     scraper.get_all_data()
