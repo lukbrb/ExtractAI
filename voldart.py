@@ -8,10 +8,10 @@ headers = {
 } 
 
 class VolDeArt:
-    def __init__(self, url, max_pages=100, override_results=True) -> None:
+    def __init__(self, url, filename, max_pages=100, override_results=True) -> None:
         self.url = url 
         self.max_pages = max_pages
-        self.filename = "images_links.txt"
+        self.filename = filename
         self.soup = self._fetch_html()
         if override_results:
             print("[*] Suppression des résultats précédents...")
@@ -46,7 +46,7 @@ class VolDeArt:
     def _save_links(self, lien_images):
         with open(self.filename, "a") as file_writer:
             for description, lien in lien_images.items():
-                file_writer.write(f"{description},{lien}\n")
+                file_writer.write(f"{description};{lien}\n")
         
     def get_profile_images(self):
         liens = self.soup.find_all('a')
@@ -86,12 +86,27 @@ class VolDeArt:
         compteur = 1
         while compteur <= self.max_pages:
             self.get_images_links()
-            time.sleep(2)
+            # time.sleep(2)
             self.next_page()
             compteur += 1
 
 
+def download_image(url, artiste, numero_image):
+    response = requests.get(url, stream=True, headers=headers)
+    extension = '.jpg' if '.jpg' in url else '.png'
+    filename = f"{artiste}_{numero_image}_{extension}"
+    if response.ok:
+        with open(filename, 'wb') as f:
+            f.write(response.content)
+        print(f"Image {filename} téléchargée avec succès")
+    else:
+        print(f"Erreur lors du téléchargement de l'image {url}")
+
+
 if __name__ == "__main__":
-    site_url = "https://www.deviantart.com/topic/digital-art"
-    scraper = VolDeArt(site_url, max_pages=1)
-    scraper.get_all_data()
+    nom_artiste = "yuumei"
+    # site_url = "https://www.deviantart.com/topic/digital-art"
+    artiste_url = f"https://www.deviantart.com/{nom_artiste}/gallery/all"
+    #scraper = VolDeArt(artiste_url, filename=f"artiste_{nom_artiste}.csv", max_pages=83)
+    #scraper.get_all_data()
+    
